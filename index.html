@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visualizador de Metas 2027 — Ingeniería | UAH</title>
+<style>
+  :root{
+    --bg:#ecebe5;
+    --ink:#000000;
+    --accent:#ff6f43;
+    --white:#ffffff;
+    --ink-60:rgba(0,0,0,.6);
+    --ink-40:rgba(0,0,0,.4);
+    --ink-15:rgba(0,0,0,.12);
+    --accent-10:rgba(255,111,67,.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .topbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:2px solid var(--ink);padding:22px clamp(16px,4vw,48px) 18px;}
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px;}
+  h1{margin:0;font-size:clamp(22px,2.6vw,32px);font-weight:800;letter-spacing:-.01em;line-height:1.1;}
+  .sub{margin-top:6px;font-size:13.5px;color:var(--ink-60);max-width:760px;line-height:1.5;}
+  main{padding:26px clamp(16px,4vw,48px) 64px;}
+  h2.section-h{font-size:20px;font-weight:800;margin:0 0 14px;letter-spacing:-.01em;}
+  .card{background:var(--white);border:1px solid var(--ink-15);border-radius:14px;padding:18px 20px;margin-bottom:22px;}
+  .card-label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink-40);margin:0 0 10px;}
+  .bars{display:flex;align-items:flex-end;gap:12px;height:64px;margin-bottom:16px;}
+  .bar-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;height:100%;}
+  .bar-val{font-size:11px;font-weight:700;margin-bottom:3px;}
+  .bar{width:100%;max-width:40px;background:var(--ink-15);border-radius:4px 4px 0 0;}
+  .bar.current{background:var(--accent);}
+  .bar-yr{font-size:10px;color:var(--ink-40);margin-top:5px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .stat-item{background:var(--bg);border-radius:8px;padding:9px 10px;}
+  .stat-item.hi{background:var(--accent);}
+  .stat-item .v{font-size:16px;font-weight:800;}
+  .stat-item .l{font-size:10px;color:var(--ink-60);margin-top:2px;}
+  .stat-item.hi .l{color:var(--ink);}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  thead th{text-align:right;padding:6px 6px;color:var(--ink-40);font-weight:700;border-bottom:1px solid var(--ink-15);}
+  thead th:first-child, thead th:nth-child(2){text-align:left;}
+  tbody td{text-align:right;padding:7px 6px;border-bottom:1px solid rgba(0,0,0,.06);}
+  tbody td:first-child, tbody td:nth-child(2){text-align:left;}
+  tbody tr.total{background:var(--accent-10);font-weight:800;}
+  tbody tr.uah{background:var(--accent-10);font-weight:800;}
+  .prop-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .prop-title{font-size:14px;font-weight:800;margin-bottom:10px;}
+  .sup-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-40);font-weight:700;margin:10px 0 4px;}
+  .sup-list{margin:0 0 10px;padding-left:16px;font-size:11.5px;line-height:1.45;color:var(--ink);}
+  .sup-list li{margin-bottom:3px;}
+  .total-compare{background:var(--white);border:1px solid var(--ink-15);border-radius:14px;padding:18px 20px;margin-bottom:22px;}
+  .filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .filter-btn{border:1px solid var(--ink-15);background:var(--white);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink-60);}
+  .filter-btn.active{background:var(--ink);color:var(--white);border-color:var(--ink);}
+  .legend-row{display:flex;flex-wrap:wrap;gap:10px 18px;font-size:11.5px;color:var(--ink-60);margin-bottom:16px;}
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+  .group-title{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-40);margin:22px 0 10px;padding-top:4px;border-top:1px solid var(--ink-15);}
+  .group-title:first-child{border-top:none;padding-top:0;}
+  .uni-card{background:var(--white);border:1px solid var(--ink-15);border-radius:14px;padding:14px 18px;margin-bottom:10px;}
+  .uni-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:9px;}
+  .uni-name{font-size:13.5px;font-weight:800;}
+  .uni-total{font-size:11px;color:var(--ink-40);white-space:nowrap;}
+  .stackbar{display:flex;width:100%;height:28px;border-radius:6px;overflow:hidden;background:var(--bg);margin-bottom:9px;}
+  .stackseg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;border-right:1px solid rgba(255,255,255,.35);}
+  .stackseg:last-child{border-right:none;}
+  .uni-detail{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:11px;color:var(--ink-60);}
+  .uni-detail span{display:inline-flex;align-items:center;gap:5px;}
+  .ref-card{background:var(--accent-10);border:1px solid var(--accent);border-radius:14px;padding:14px 18px;margin-bottom:18px;}
+  .ref-card .uni-name{color:var(--accent);}
+  @media (max-width:700px){ .prop-grid{grid-template-columns:1fr;} .stat-grid{grid-template-columns:repeat(2,1fr);} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="eyebrow">UAH · Facultad de Ingeniería</div>
+  <h1>Visualizador de Metas 2027</h1>
+  <div class="sub">Contexto histórico de Ingeniería Civil Plan Común, comparación de las dos propuestas de vacantes y metas 2027 (con supuestos y riesgos), y benchmarking de matrícula frente a otras universidades.</div>
+</div>
+
+<main>
+
+  <h2 class="section-h">Ingeniería Civil Plan Común · contexto histórico</h2>
+  <div class="card">
+    <div class="card-label">Selección por año</div>
+    <div class="bars" id="selBars"></div>
+
+    <div class="stat-grid">
+      <div class="stat-item"><div class="v">0</div><div class="l">LE 2026</div></div>
+      <div class="stat-item"><div class="v">110</div><div class="l">Cupos 2026</div></div>
+      <div class="stat-item"><div class="v">50</div><div class="l">Sobrecupos 2026</div></div>
+      <div class="stat-item hi"><div class="v">152</div><div class="l">Meta 2026 total (fin año)</div></div>
+    </div>
+
+    <div class="card-label">Meta 2026 (detalle)</div>
+    <div class="stat-grid">
+      <div class="stat-item"><div class="v">140</div><div class="l">1er sem</div></div>
+      <div class="stat-item"><div class="v">121 / 31</div><div class="l">Cent / Dir (30 abril)</div></div>
+      <div class="stat-item"><div class="v">0</div><div class="l">2do sem</div></div>
+      <div class="stat-item hi"><div class="v">152</div><div class="l">Total fin año</div></div>
+    </div>
+
+    <div class="card-label">Admisión acumulada y matrícula 30 abril por año</div>
+    <table>
+      <thead><tr>
+        <th colspan="2">Año</th>
+        <th>Adm.Ac. Cent</th><th>Adm.Ac. Dir</th><th>Adm.Ac. Total</th>
+        <th>Mat30abr Cent</th><th>Mat30abr Dir</th><th>Mat30abr Total</th>
+      </tr></thead>
+      <tbody id="histBody"></tbody>
+    </table>
+  </div>
+
+  <h2 class="section-h">Propuestas de vacantes y metas 2027</h2>
+  <div class="prop-grid" id="propGrid"></div>
+
+  <h2 class="section-h">Total Facultad · comparación de propuestas</h2>
+  <div class="total-compare" id="totalCompare"></div>
+
+  <h2 class="section-h" style="margin-top:8px;">Comparación con otras universidades</h2>
+  <div class="sub" style="margin-bottom:16px;">Mix de programas de Ingeniería por universidad: cada barra representa el 100% de la matrícula de ingeniería de esa universidad, dividida entre sus carreras. El % indica cuánto pesa cada programa dentro del total de la universidad. Agrupadas según si combinan Plan Común + 2 carreras (Industrial e Informática) o tienen otra combinación de programas.</div>
+  <div class="ref-card" id="uahRef"></div>
+  <div class="legend-row" id="legendRow"></div>
+  <div class="filter-bar" id="filterBar"></div>
+  <div id="groups"></div>
+
+</main>
+
+<script>
+function num(x){ return Math.round(x).toLocaleString('es-CL'); }
+function pctFmt(x){ return x===null ? '—' : (x*100).toFixed(0)+'%'; }
+
+/* --- Historical Plan Común --- */
+const sel = {2023:38,2024:56,2025:94,2026:101};
+const admAcum = {
+  2023:{cent:31,dir:18,total:49},
+  2024:{cent:53,dir:22,total:75},
+  2025:{cent:91,dir:21,total:112},
+  2026:{cent:null,dir:null,total:111}
+};
+const mat30abr = {
+  2023:{cent:27,dir:17,total:44},
+  2024:{cent:53,dir:21,total:74},
+  2025:{cent:82,dir:21,total:103},
+  2026:{cent:94,dir:12,total:106}
+};
+
+const selBars = document.getElementById('selBars');
+const maxSel = Math.max(...Object.values(sel));
+Object.entries(sel).forEach(([yr,v])=>{
+  const h = Math.max(8,(v/maxSel)*64);
+  const cur = yr==='2026';
+  const wrap = document.createElement('div');
+  wrap.className='bar-wrap';
+  wrap.innerHTML = '<div class="bar-val">'+v+'</div><div class="bar '+(cur?'current':'')+'" style="height:'+h+'px"></div><div class="bar-yr">'+yr+'</div>';
+  selBars.appendChild(wrap);
+});
+
+const histBody = document.getElementById('histBody');
+[2023,2024,2025,2026].forEach(yr=>{
+  const a = admAcum[yr], m = mat30abr[yr];
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td style="font-weight:700;" colspan="2">'+yr+'</td>'
+    +'<td>'+(a.cent!==null?num(a.cent):'—')+'</td>'
+    +'<td>'+(a.dir!==null?num(a.dir):'—')+'</td>'
+    +'<td style="font-weight:700;">'+num(a.total)+'</td>'
+    +'<td>'+num(m.cent)+'</td>'
+    +'<td>'+num(m.dir)+'</td>'
+    +'<td style="font-weight:700;">'+num(m.total)+'</td>';
+  histBody.appendChild(tr);
+});
+
+/* --- Propuestas, con supuestos y riesgos --- */
+const propuestas = {
+  'Propuesta 1':{
+    rows:[
+      {carrera:'Plan Común',cupos27:50,sc27:35,pctCentral:0.97,meta30abr:87,metaCent:82,metaDir:9},
+      {carrera:'Industrial',cupos27:30,sc27:20,pctCentral:0.84,meta30abr:47,metaCent:42,metaDir:5},
+      {carrera:'Informática',cupos27:30,sc27:20,pctCentral:0.84,meta30abr:47,metaCent:42,metaDir:5},
+      {carrera:'Total Facultad',cupos27:110,sc27:75,pctCentral:null,meta30abr:181,metaCent:166,metaDir:19,isTotal:true}
+    ],
+    supuestos:[
+      'Mayor interés por el plan común que por carreras individuales',
+      'Tasa de conversión a matrícula desde seleccionados de Ing. Plan Común es la misma que la del año anterior',
+      'Tasa de conversión de seleccionados a matrícula en carreras nuevas utiliza el valor institucional 2026',
+      'Ambas carreras individuales suscitan el mismo interés'
+    ],
+    riesgos:[
+      'Mayor interés por las carreras individuales (mayor que 50 estudiantes) puede generar listas de espera',
+      'Si la tasa de conversión de las Ingenierías individuales es mayor a 84%, puede esperarse un mayor número de matriculados en esas carreras, aumentando el total de la facultad'
+    ]
+  },
+  'Propuesta 2':{
+    rows:[
+      {carrera:'Plan Común',cupos27:30,sc27:20,pctCentral:0.97,meta30abr:53,metaCent:49,metaDir:6},
+      {carrera:'Industrial',cupos27:45,sc27:30,pctCentral:0.84,meta30abr:66,metaCent:63,metaDir:3},
+      {carrera:'Informática',cupos27:45,sc27:30,pctCentral:0.84,meta30abr:63,metaCent:63,metaDir:0},
+      {carrera:'Total Facultad',cupos27:120,sc27:80,pctCentral:null,meta30abr:182,metaCent:175,metaDir:9,isTotal:true}
+    ],
+    supuestos:[
+      'Mayor interés por las carreras individuales que por el Plan Común',
+      'Ambas carreras individuales suscitan el mismo interés',
+      'Tasa de conversión a matrícula desde seleccionados de Ing. Plan Común es la misma que la del año anterior',
+      'Tasa de conversión de seleccionados a matrícula en carreras nuevas utiliza el valor institucional 2026'
+    ],
+    riesgos:[
+      'Si hay un interés por el plan común mayor que 50 estudiantes, se generarán listas de espera',
+      'Si la tasa de conversión de las Ingenierías individuales es mayor a 84%, puede esperarse un mayor número de matriculados en esas carreras, aumentando el total de la facultad'
+    ]
+  }
+};
+
+const propGrid = document.getElementById('propGrid');
+Object.entries(propuestas).forEach(([name, data])=>{
+  const col = document.createElement('div');
+  col.className='card';
+  let rowsHtml = data.rows.map(r=>{
+    return '<tr class="'+(r.isTotal?'total':'')+'">'
+      +'<td>'+r.carrera+'</td>'
+      +'<td>'+num(r.cupos27)+'</td>'
+      +'<td>'+num(r.sc27)+'</td>'
+      +'<td>'+pctFmt(r.pctCentral)+'</td>'
+      +'<td>'+num(r.meta30abr)+'</td>'
+      +'<td>'+num(r.metaCent)+'</td>'
+      +'<td>'+num(r.metaDir)+'</td>'
+    +'</tr>';
+  }).join('');
+  const supHtml = data.supuestos.map(s=>'<li>'+s+'</li>').join('');
+  const riesgoHtml = data.riesgos.map(s=>'<li>'+s+'</li>').join('');
+  col.innerHTML = '<div class="prop-title">'+name+'</div>'
+    +'<table><thead><tr>'
+      +'<th>Carrera</th>'
+      +'<th>Cupos año 2027</th>'
+      +'<th>Sobrecupos año 2027</th>'
+      +'<th>% Central.</th>'
+      +'<th>Meta 30 abr</th>'
+      +'<th>Meta Cent.</th>'
+      +'<th>Meta Dir.</th>'
+    +'</tr></thead><tbody>'+rowsHtml+'</tbody></table>'
+    +'<div class="sup-label">Supuestos</div>'
+    +'<ul class="sup-list">'+supHtml+'</ul>'
+    +'<div class="sup-label">Riesgos</div>'
+    +'<ul class="sup-list">'+riesgoHtml+'</ul>';
+  propGrid.appendChild(col);
+});
+
+/* --- Total Facultad: comparación de propuestas --- */
+const totalP1 = propuestas['Propuesta 1'].rows.find(r=>r.isTotal);
+const totalP2 = propuestas['Propuesta 2'].rows.find(r=>r.isTotal);
+const metrics = [
+  {label:'Cupos año 2027', k:'cupos27'},
+  {label:'Sobrecupos año 2027', k:'sc27'},
+  {label:'Meta 30 abril', k:'meta30abr'},
+  {label:'Meta Centralizada', k:'metaCent'},
+  {label:'Meta Directa', k:'metaDir'}
+];
+const totalDiv = document.getElementById('totalCompare');
+let totalRows = metrics.map(m=>{
+  const v1 = totalP1[m.k], v2 = totalP2[m.k];
+  const diff = v2-v1;
+  const diffColor = diff>0 ? '#1a7d3d' : (diff<0 ? '#c23b22' : '#000000');
+  const diffTxt = diff===0 ? '=' : (diff>0?'+':'')+num(diff);
+  return '<tr>'
+    +'<td>'+m.label+'</td>'
+    +'<td style="font-weight:800;">'+num(v1)+'</td>'
+    +'<td style="font-weight:800;">'+num(v2)+'</td>'
+    +'<td style="font-weight:800;color:'+diffColor+';">'+diffTxt+'</td>'
+  +'</tr>';
+}).join('');
+totalDiv.innerHTML = '<table><thead><tr>'
+    +'<th>Métrica (Total Facultad)</th>'
+    +'<th>Propuesta 1</th>'
+    +'<th>Propuesta 2</th>'
+    +'<th>Diferencia (P2−P1)</th>'
+  +'</tr></thead><tbody>'+totalRows+'</tbody></table>';
+
+/* --- Comparación con otras universidades: agrupada por IES, no por carrera --- */
+/* Fuente: hoja "Resumen Ingeniería Competencia" del Excel. El % de matrícula es la
+   participación de cada carrera dentro de la matrícula total de ingeniería de esa
+   universidad (no una comparación carrera a carrera entre universidades). */
+const compRows = [{"ies": "Universidad Alberto Hurtado", "carrera": "Ingeniería Civil Plan Común", "dur": 4, "m2025": 103, "m2026": 106, "pct": null, "grupo": "no"}, {"ies": "Universidad Adolfo Ibáñez", "carrera": "Ingeniería Civil, Plan Común", "dur": 4, "m2025": 431, "m2026": 398, "pct": 0.9343, "grupo": "no"}, {"ies": "Universidad Adolfo Ibáñez", "carrera": "Ingeniería en Computer Science", "dur": 11, "m2025": 24, "m2026": 28, "pct": 0.0657, "grupo": "no"}, {"ies": "Universidad Andrés Bello", "carrera": "Ingeniería Civil Informática", "dur": 10, "m2025": 278, "m2026": 268, "pct": 0.3503, "grupo": "no"}, {"ies": "Universidad Andrés Bello", "carrera": "Ingeniería Civil Industrial", "dur": 10, "m2025": 312, "m2026": 365, "pct": 0.4771, "grupo": "no"}, {"ies": "Universidad Andrés Bello", "carrera": "Ingeniería en Computación e Informática", "dur": 8, "m2025": 152, "m2026": 132, "pct": 0.1725, "grupo": "no"}, {"ies": "Universidad Autónoma de Chile", "carrera": "Ingeniería Civil Informática", "dur": 11, "m2025": 134, "m2026": 133, "pct": 0.4419, "grupo": "si"}, {"ies": "Universidad Autónoma de Chile", "carrera": "Ingeniería Civil Industrial", "dur": 11, "m2025": 100, "m2026": 108, "pct": 0.3588, "grupo": "si"}, {"ies": "Universidad Autónoma de Chile", "carrera": "Ingeniería Civil Plan Común", "dur": 2, "m2025": 0, "m2026": 60, "pct": 0.1993, "grupo": "si"}, {"ies": "Universidad Bernardo O'Higgins", "carrera": "Ingeniería Civil Industrial", "dur": 10, "m2025": 40, "m2026": 60, "pct": 0.355, "grupo": "no"}, {"ies": "Universidad Bernardo O'Higgins", "carrera": "Ingeniería en Informática", "dur": 8, "m2025": 0, "m2026": 109, "pct": 0.645, "grupo": "no"}, {"ies": "Universidad Católica Cardenal Raúl Silva Henríquez", "carrera": "Ingeniería Civil en Computación e Informática", "dur": 12, "m2025": 90, "m2026": 81, "pct": 0.5625, "grupo": "no"}, {"ies": "Universidad Católica Cardenal Raúl Silva Henríquez", "carrera": "Ingeniería Civil Industrial", "dur": 11, "m2025": 67, "m2026": 63, "pct": 0.4375, "grupo": "no"}, {"ies": "Universidad Central de Chile", "carrera": "Ingeniería Civil en Computación e Informática", "dur": 11, "m2025": 102, "m2026": 106, "pct": 0.5327, "grupo": "no"}, {"ies": "Universidad Central de Chile", "carrera": "Ingeniería Civil Industrial", "dur": 11, "m2025": 89, "m2026": 93, "pct": 0.4673, "grupo": "no"}, {"ies": "Universidad de Chile", "carrera": "Ingeniería y Ciencias - Plan Común", "dur": 4, "m2025": 949, "m2026": 919, "pct": null, "grupo": "no"}, {"ies": "Universidad de las Américas", "carrera": "Ingeniería Civil Industrial", "dur": 10, "m2025": 39, "m2026": 78, "pct": null, "grupo": "no"}, {"ies": "Universidad de los Andes", "carrera": "Ingeniería Civil (Plan Común)", "dur": 4, "m2025": 291, "m2026": 248, "pct": null, "grupo": "no"}, {"ies": "Universidad de Santiago de Chile", "carrera": "Ingeniería Civil en Informática", "dur": 11, "m2025": 109, "m2026": 99, "pct": 0.3764, "grupo": "no"}, {"ies": "Universidad de Santiago de Chile", "carrera": "Ingeniería Civil Industrial", "dur": 11, "m2025": 121, "m2026": 164, "pct": 0.6236, "grupo": "no"}, {"ies": "Universidad de Valparaíso", "carrera": "Ingeniería Civil Industrial", "dur": 11, "m2025": 83, "m2026": 83, "pct": null, "grupo": "no"}, {"ies": "Universidad del Desarrollo", "carrera": "Ingeniería Civil en Informática e Innovación Tecnológica", "dur": 10, "m2025": 41, "m2026": 26, "pct": 0.1057, "grupo": "si"}, {"ies": "Universidad del Desarrollo", "carrera": "Ingeniería Civil en Informática e Inteligencia Artificial", "dur": 10, "m2025": 47, "m2026": 19, "pct": 0.0772, "grupo": "si"}, {"ies": "Universidad del Desarrollo", "carrera": "Ingeniería Civil Industrial", "dur": 10, "m2025": 78, "m2026": 55, "pct": 0.2236, "grupo": "si"}, {"ies": "Universidad del Desarrollo", "carrera": "Ingeniería Civil Plan Común", "dur": 4, "m2025": 130, "m2026": 146, "pct": 0.5935, "grupo": "si"}, {"ies": "Universidad Diego Portales", "carrera": "Ingeniería Civil en Informática y Telecomunicaciones", "dur": 11, "m2025": 181, "m2026": 207, "pct": 0.2597, "grupo": "si"}, {"ies": "Universidad Diego Portales", "carrera": "Ingeniería Civil Industrial", "dur": 11, "m2025": 293, "m2026": 353, "pct": 0.4429, "grupo": "si"}, {"ies": "Universidad Diego Portales", "carrera": "Ingeniería Civil Plan Común", "dur": 2, "m2025": 168, "m2026": 237, "pct": 0.2974, "grupo": "si"}, {"ies": "Universidad Finis Terrae", "carrera": "Ingeniería Civil Informática y Telecomunicaciones", "dur": 10, "m2025": 121, "m2026": 102, "pct": 0.5829, "grupo": "no"}, {"ies": "Universidad Finis Terrae", "carrera": "Ingeniería Civil Industrial", "dur": 10, "m2025": 82, "m2026": 73, "pct": 0.4171, "grupo": "no"}, {"ies": "Universidad Gabriela Mistral", "carrera": "Ingeniería Civil Informática", "dur": 10, "m2025": 10, "m2026": 14, "pct": 0.9333, "grupo": "no"}, {"ies": "Universidad Gabriela Mistral", "carrera": "Ingeniería Civil Industrial", "dur": 10, "m2025": 4, "m2026": 1, "pct": 0.0667, "grupo": "no"}, {"ies": "Universidad Mayor", "carrera": "Ingeniería Civil en Computación e Informática", "dur": 11, "m2025": 130, "m2026": 215, "pct": 0.5218, "grupo": "no"}, {"ies": "Universidad Mayor", "carrera": "Ingeniería Civil Industrial", "dur": 11, "m2025": 140, "m2026": 197, "pct": 0.4782, "grupo": "no"}, {"ies": "Universidad San Sebastián", "carrera": "Ingeniería Civil Informática", "dur": 10, "m2025": 94, "m2026": 96, "pct": 0.4948, "grupo": "no"}, {"ies": "Universidad San Sebastián", "carrera": "Ingeniería Civil Industrial", "dur": 10, "m2025": 78, "m2026": 83, "pct": 0.4278, "grupo": "no"}, {"ies": "Universidad San Sebastián", "carrera": "Ingeniería Civil", "dur": 11, "m2025": 20, "m2026": 15, "pct": 0.0773, "grupo": "no"}, {"ies": "Universidad Santo Tomás", "carrera": "Ingeniería Civil Informática y Sistemas Inteligentes", "dur": 11, "m2025": 77, "m2026": 103, "pct": 0.7103, "grupo": "no"}, {"ies": "Universidad Santo Tomás", "carrera": "Ingeniería Civil Industrial", "dur": 11, "m2025": 48, "m2026": 42, "pct": 0.2897, "grupo": "no"}, {"ies": "Universidad Técnica Federico Santa María", "carrera": "Ingeniería Civil Informática", "dur": 10, "m2025": 156, "m2026": 191, "pct": 0.3147, "grupo": "si"}, {"ies": "Universidad Técnica Federico Santa María", "carrera": "Ingeniería Civil Industrial", "dur": 10, "m2025": 158, "m2026": 188, "pct": 0.3097, "grupo": "si"}, {"ies": "Universidad Técnica Federico Santa María", "carrera": "Ingeniería Civil Plan Común", "dur": 4, "m2025": 202, "m2026": 228, "pct": 0.3756, "grupo": "si"}, {"ies": "Universidad Tecnológica Metropolitana", "carrera": "Ingeniería Civil en Computación Mención Informática", "dur": 11, "m2025": 219, "m2026": 234, "pct": 0.6207, "grupo": "no"}, {"ies": "Universidad Tecnológica Metropolitana", "carrera": "Ingeniería Civil Industrial", "dur": 11, "m2025": 126, "m2026": 143, "pct": 0.3793, "grupo": "no"}];
+
+function tipoCarrera(carrera){
+  const c = carrera.toLowerCase();
+  if(c.includes('plan comun') || c.includes('plan común')) return 'Plan Común';
+  if(c.includes('industrial')) return 'Industrial';
+  if(c.includes('informátic') || c.includes('informatic') || c.includes('computac') || c.includes('computer')) return 'Informática / Computación';
+  return 'Otro';
+}
+const TIPO_COLOR = {
+  'Plan Común': '#ff6f43',
+  'Industrial': '#1f2937',
+  'Informática / Computación': '#2f6fed',
+  'Otro': '#9a9a9a'
+};
+
+/* Referencia UAH (única carrera hoy: Plan Común) */
+const uahRow = compRows.find(r=>r.ies==='Universidad Alberto Hurtado');
+const uahRefEl = document.getElementById('uahRef');
+uahRefEl.innerHTML = '<div class="uni-head"><div class="uni-name">UAH (referencia)</div>'
+  +'<div class="uni-total">Matríc. 2025: '+num(uahRow.m2025)+' · Matríc. 2026: '+num(uahRow.m2026)+'</div></div>'
+  +'<div class="uni-detail"><span>Hoy ofrece solo '+uahRow.carrera+' — sin mix de programas que comparar todavía.</span></div>';
+
+/* Leyenda de colores por tipo de programa */
+const legendRow = document.getElementById('legendRow');
+legendRow.innerHTML = Object.entries(TIPO_COLOR).map(([tipo,color])=>{
+  return '<div class="legend-item"><div class="legend-dot" style="background:'+color+';"></div>'+tipo+'</div>';
+}).join('');
+
+/* Filtro por variable "Plan Común + 2 carreras" */
+const filterBar = document.getElementById('filterBar');
+const filters = [
+  {key:'all', label:'Todas'},
+  {key:'si', label:'Plan Común + 2 carreras (Sí)'},
+  {key:'no', label:'Otra combinación (No)'}
+];
+let activeFilter = 'all';
+filterBar.innerHTML = filters.map(f=>'<button class="filter-btn'+(f.key===activeFilter?' active':'')+'" data-key="'+f.key+'">'+f.label+'</button>').join('');
+
+const groupsEl = document.getElementById('groups');
+const otherUniRows = compRows.filter(r=>r.ies!=='Universidad Alberto Hurtado');
+
+function buildUniCard(ies, progs){
+  const total = progs.reduce((s,p)=>s+p.m2026,0);
+  const segsHtml = progs.map(p=>{
+    const width = p.pct!==null ? (p.pct*100) : (progs.length===1 ? 100 : (p.m2026/total*100));
+    const color = TIPO_COLOR[tipoCarrera(p.carrera)];
+    const pctLabel = p.pct!==null ? pctFmt(p.pct) : '–';
+    return '<div class="stackseg" style="width:'+width.toFixed(2)+'%;background:'+color+';" title="'+p.carrera+' — '+pctLabel+'">'+(width>9?pctLabel:'')+'</div>';
+  }).join('');
+  const detailHtml = progs.map(p=>{
+    const color = TIPO_COLOR[tipoCarrera(p.carrera)];
+    const pctLabel = p.pct!==null ? pctFmt(p.pct) : '–';
+    return '<span><span class="legend-dot" style="background:'+color+';"></span>'+p.carrera+' ('+pctLabel+', mat. 2026: '+num(p.m2026)+')</span>';
+  }).join('');
+  const card = document.createElement('div');
+  card.className = 'uni-card';
+  card.innerHTML = '<div class="uni-head"><div class="uni-name">'+ies+'</div>'
+    +'<div class="uni-total">Matríc. ingeniería 2026: '+num(total)+'</div></div>'
+    +'<div class="stackbar">'+segsHtml+'</div>'
+    +'<div class="uni-detail">'+detailHtml+'</div>';
+  return card;
+}
+
+function render(filter){
+  groupsEl.innerHTML = '';
+  const byIes = {};
+  otherUniRows.forEach(r=>{
+    if(!byIes[r.ies]) byIes[r.ies] = [];
+    byIes[r.ies].push(r);
+  });
+  const uniList = Object.keys(byIes).map(ies=>{
+    const progs = byIes[ies];
+    const grupo = progs[0].grupo;
+    const total2026 = progs.reduce((s,p)=>s+p.m2026,0);
+    return {ies, progs, grupo, total2026};
+  }).sort((a,b)=>b.total2026-a.total2026);
+
+  const sections = filter==='all'
+    ? [{key:'si', label:'Plan Común + 2 carreras (Sí)'},{key:'no', label:'Otra combinación (No)'}]
+    : filters.filter(f=>f.key===filter);
+
+  sections.forEach(sec=>{
+    const list = uniList.filter(u=>u.grupo===sec.key);
+    if(list.length===0) return;
+    const title = document.createElement('div');
+    title.className = 'group-title';
+    title.textContent = sec.label + ' · ' + list.length + ' universidades';
+    groupsEl.appendChild(title);
+    list.forEach(u=>groupsEl.appendChild(buildUniCard(u.ies, u.progs)));
+  });
+}
+
+filterBar.addEventListener('click', e=>{
+  const btn = e.target.closest('.filter-btn');
+  if(!btn) return;
+  activeFilter = btn.dataset.key;
+  [...filterBar.children].forEach(b=>b.classList.toggle('active', b===btn));
+  render(activeFilter);
+});
+
+render(activeFilter);
+</script>
+</body>
+</html>
